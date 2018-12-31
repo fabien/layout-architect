@@ -299,9 +299,8 @@
           notify();
         }
       },
-      update() {
+      render() {
         render();
-        notify()
       }
     }
   };
