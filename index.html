@@ -28,12 +28,12 @@
       margin-top: 2em;
     }
     #container {
+      box-sizing: border-box;
       margin: 0 auto;
-      width: 300px;
-      height: 300px;
+      width: 600px;
+      height: 600px;
       border: solid 1px #999;
-      border-radius: 4px;
-      padding: 0.5em;
+      padding: 9px;
     }
     h1 {
       margin-top: 2em;
@@ -56,6 +56,13 @@
       max-width: 900px;
       margin: 4em auto;
     }
+    .la-block {
+      cursor: pointer;
+    }
+    .la-block-editor,
+    .la-block-special {
+      background: #eee;
+    }
   </style>
 </head>
 <body>
@@ -71,7 +78,12 @@
     <pre>
 const la = LayoutArchitect(
   document.querySelector('#container'),
-  ['editor', 'output', 'console', 'notes']
+  {
+      editor: 'Editor',
+      output: 'Output',
+      console: 'Console',
+      notes: 'Notes'
+  }
 );
 
 la.onChange(layout => {
@@ -91,17 +103,21 @@ la.change(
 
   <script src="./la.js"></script>
   <script>
-    const initialLayout = {
-      "name": "editor",
-      "elements": []
-    };
     const result = document.querySelector('#result');
     const la = LayoutArchitect(
       document.querySelector('#container'),
-      ['editor', 'output', 'console', 'notes'],
-      initialLayout
+      {
+          editor: { label: 'Editor' },
+          output: { label: 'Output' },
+          console: { label: 'Console', type: 'special' },
+          notes: { label: 'Notes' },
+          slider: { label: 'Slider' }
+      },
+      function(item, data) {
+        item.label = data.label || item.id;
+      }
     );
-
+    
     la.onChange(layout => {
       if (layout) {
         result.innerHTML = '<pre>' + JSON.stringify(layout, null, 2) + '</pre>';
@@ -109,8 +125,33 @@ la.change(
         result.innerHTML = '';
       }
     });
-
-    result.innerHTML = '<pre>' + JSON.stringify(initialLayout, null, 2) + '</pre>';
+    
+    let stack = [];
+    
+    function handleReplaceFn(init) {
+      return function handleReplace(e) {
+        const target = e.target.matches('.la-name') ? e.target.parentNode : e.target;
+        if (target.matches('[data-id]')) {
+          if (stack.length === 1) {
+            la.replace(stack[0], target.getAttribute('data-id'), true);
+            stack = [];
+          } else if (init) {
+            target.style = 'background: #00baff';
+            stack.push(target.getAttribute('data-id'));
+          }
+        }
+      };
+    };
+    
+    const container = document.getElementById('container');
+    container.addEventListener('click', handleReplaceFn(), false);
+    container.addEventListener('dblclick', handleReplaceFn(true), false);
+    
+    container.addEventListener('mouseleave', function() {
+      stack = [];
+      la.update();
+    });
+    
   </script>
   
 </body>
